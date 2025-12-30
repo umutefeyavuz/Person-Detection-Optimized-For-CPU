@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Lunet AI - Ayarlar{% endblock %}
+
+{% block content %}
+<header class="top-bar">
+    <h2 class="page-title">Sistem Ayarları</h2>
+</header>
+<div class="card" style="padding: 20px;">
+    <h3>Genel Ayarlar</h3>
+    <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 15px;">
+        <!-- Güven Skoru Ayarı -->
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(30, 41, 59, 0.5); border-radius: 8px;">
+            <div>
+                <h4 style="margin: 0; color: #e5e7eb;">Güven Skoru Eşiği: <span id="scoreValue"
+                        style="color: #22c55e;">0.45</span></h4>
+                <p style="margin: 5px 0 0; font-size: 0.9em; color: #9ca3af;">Daha düşük değerler hassasiyeti artırır.
+                </p>
+            </div>
+            <input type="range" id="scoreInput" min="0.1" max="0.9" step="0.05" value="0.45"
+                style="width: 150px; cursor: pointer;">
+        </div>
+
+        <!-- Otomatik Kayıt Ayarı -->
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(30, 41, 59, 0.5); border-radius: 8px;">
+            <div>
+                <h4 style="margin: 0; color: #e5e7eb;">Otomatik Kayıt</h4>
+                <p style="margin: 5px 0 0; font-size: 0.9em; color: #9ca3af;">Veritabanına 5 saniyede bir kayıt at.</p>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 24px;">
+                <input type="checkbox" id="autoRecordSwitch" checked style="opacity: 0; width: 0; height: 0;">
+                <span class="slider round"
+                    style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4b5563; transition: .4s; border-radius: 34px;"></span>
+            </label>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const socket = io();
+    const scoreInput = document.getElementById('scoreInput');
+    const scoreValue = document.getElementById('scoreValue');
+    const autoRecordSwitch = document.getElementById('autoRecordSwitch');
+
+    // Sayfa yüklendiğinde ayarları iste
+    socket.emit('get_settings');
+
+    // Sunucudan ayarlar geldiğinde
+    socket.on('settings_update', (data) => {
+        console.log('Settings updated:', data);
+
+        // UI güncelle
+        scoreInput.value = data.confidence_threshold;
+        scoreValue.textContent = parseFloat(data.confidence_threshold).toFixed(2);
+        autoRecordSwitch.checked = data.auto_record;
+
+        // Switch rengini güncelle (CSS sınıfı yerine inline style manipülasyonu gerekebilir veya CSS classı kontrol edin)
+        // Not: CSS'teki .slider:checked + .slider mantığı checkbox state ile çalışır, ekstra JS gerekmez.
+    });
+
+    // Slider değiştiğinde
+    scoreInput.addEventListener('input', (e) => {
+        const value = e.target.value;
+        scoreValue.textContent = parseFloat(value).toFixed(2);
+        socket.emit('update_settings', { confidence_threshold: value });
+    });
+
+    // Switch değiştiğinde
+    autoRecordSwitch.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        socket.emit('update_settings', { auto_record: isChecked });
+    });
+</script>
+{% endblock %}

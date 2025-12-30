@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Lunet AI - Panel{% endblock %}
+
+{% block content %}
+<header class="top-bar">
+    <h2 class="page-title">Canlı İzleme Paneli</h2>
+    <div class="actions">
+        <button id="startBtn" class="btn btn-primary">
+            <span class="material-symbols-outlined">play_arrow</span>
+            Başlat
+        </button>
+        <button id="stopBtn" class="btn btn-danger">
+            <span class="material-symbols-outlined">stop</span>
+            Durdur
+        </button>
+    </div>
+</header>
+
+<div class="dashboard-grid">
+    <!-- Video Feed Card -->
+    <div class="card video-card">
+        <div class="card-header">
+            <h3>Kamera Akışı</h3>
+            <span class="live-badge">CANLI</span>
+        </div>
+        <div class="video-wrapper">
+            <img id="videoFeed" src="{{ url_for('video_feed') }}" alt="Kamera Görüntüsü">
+            <div class="video-overlay">
+                <div class="detection-counter">
+                    <span class="material-symbols-outlined">person</span>
+                    <span id="currentCount">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-column">
+        <div class="stat-card">
+            <div class="stat-icon bg-blue">
+                <span class="material-symbols-outlined">visibility</span>
+            </div>
+            <div class="stat-info">
+                <h4>Toplam Tespit</h4>
+                <p id="totalDetections">0</p>
+                <span class="stat-label">Son 24 Saat</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-green">
+                <span class="material-symbols-outlined">groups</span>
+            </div>
+            <div class="stat-info">
+                <h4>Ortalama</h4>
+                <p id="avgPersons">0</p>
+                <span class="stat-label">Kişi / Kare</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-orange">
+                <span class="material-symbols-outlined">trending_up</span>
+            </div>
+            <div class="stat-info">
+                <h4>Maksimum</h4>
+                <p id="maxPersons">0</p>
+                <span class="stat-label">Anlık Yoğunluk</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="card chart-card">
+        <div class="card-header">
+            <h3>Saatlik Yoğunluk Analizi</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="hourlyChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Detections -->
+    <div class="card table-card">
+        <div class="card-header">
+            <h3>Son Algılananlar</h3>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Zaman</th>
+                        <th>Kişi Sayısı</th>
+                        <th>Güven Skoru</th>
+                    </tr>
+                </thead>
+                <tbody id="detectionsTable">
+                    <!-- JS ile doldurulacak -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

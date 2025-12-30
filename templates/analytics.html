@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Lunet AI - Detaylı Analiz{% endblock %}
+
+{% block content %}
+<header class="top-bar">
+    <h2 class="page-title">Detaylı Analizler</h2>
+    <div class="actions">
+        <div class="dropdown" style="position: relative; display: inline-block;">
+            <button class="btn btn-primary" onclick="toggleDropdown()">
+                <span class="material-symbols-outlined">download</span>
+                Rapor İndir
+            </button>
+            <div id="exportDropdown" class="dropdown-content"
+                style="display: none; position: absolute; right: 0; background-color: #1e293b; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5); z-index: 100; border-radius: 8px; border: 1px solid #374151;">
+                <a href="/api/export_csv?period=24hours"
+                    style="color: #d1d5db; padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid #374151;">Son
+                    24 Saat</a>
+                <a href="/api/export_csv?period=7days"
+                    style="color: #d1d5db; padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid #374151;">Son
+                    1 Hafta</a>
+                <a href="/api/export_csv?period=all"
+                    style="color: #d1d5db; padding: 12px 16px; text-decoration: none; display: block;">Tüm Veriler</a>
+            </div>
+        </div>
+    </div>
+</header>
+<div class="dashboard-grid">
+    <!-- Chart Section -->
+    <div class="card chart-card" style="width: 100%; grid-column: span 3;">
+        <div class="card-header">
+            <h3>Günlük Aktivite Grafiği (24 Saat)</h3>
+        </div>
+        <div class="chart-container" style="height: 300px;">
+            <canvas id="detailedChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Full Table Section -->
+    <div class="card table-card" style="width: 100%; grid-column: span 3;">
+        <div class="card-header">
+            <h3>Son Algılama Kayıtları (Son 100)</h3>
+        </div>
+        <div class="table-wrapper" style="max-height: 500px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead style="position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                    <tr>
+                        <th style="padding: 12px; text-align: left; color: #9ca3af; border-bottom: 1px solid #374151;">
+                            ID</th>
+                        <th style="padding: 12px; text-align: left; color: #9ca3af; border-bottom: 1px solid #374151;">
+                            Zaman</th>
+                        <th style="padding: 12px; text-align: left; color: #9ca3af; border-bottom: 1px solid #374151;">
+                            Kişi Sayısı</th>
+                        <th style="padding: 12px; text-align: left; color: #9ca3af; border-bottom: 1px solid #374151;">
+                            Ort. Güven</th>
+                        <th style="padding: 12px; text-align: left; color: #9ca3af; border-bottom: 1px solid #374151;">
+                            Kaynak</th>
+                    </tr>
+                </thead>
+                <tbody id="detailedTableBody">
+                    <!-- JS ile dolacak -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let detailedChart = null;
+
+    function toggleDropdown() {
+        const dd = document.getElementById("exportDropdown");
+        if (dd.style.display === "none") {
+            dd.style.display = "block";
+        } else {
+            dd.style.display = "none";
+        }
+    }
+
+    // Dropdown dışına tıklandığında kapat
+    window.onclick = function (event) {
+        if (!event.target.matches('.btn-primary') && !event.target.matches('.material-symbols-outlined')) {
+            const dd = document.getElementById("exportDropdown");
+            if (dd && dd.style.display === "block") {
+                dd.style.display = "none";
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initChart();
+        loadData();
+        // Her 15 saniyede bir yenile
+        setInterval(loadData, 15000);
+    });
+
+    async function loadData() {
+        // Grafiği güncelle
+        try {
+            const chartData = await fetch('/api/hourly_data?hours=24').then(r => r.json());
+            updateChart(chartData);
+        } catch (e) { console.error("Chart data error:", e); }
+
+        // Tabloyu güncelle
+        try {
+            const tableData = await fetch('/api/recent_detections?limit=100').then(r => r.json());
+            updateTable(tableData);
+        } catch (e) { console.error("Table data error:", e); }
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('detailedChart').getContext('2d');
+        detailedChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Ortalama Kişi Sayısı',
+                    data: [],
+                    borderColor: '#22c55e',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Maksimum Kişi',
+                    data: [],
+                    borderColor: '#f97316',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#9ca3af' } }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(75, 85, 99, 0.2)' },
+                        ticks: { color: '#9ca3af' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9ca3af', maxTicksLimit: 12 }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateChart(data) {
+        if (!detailedChart) return;
+
+        const labels = data.map(d => d.hour.substring(11, 16)); // Sadece saat:dakika
+        const avgCounts = data.map(d => d.avg_count);
+        const maxCounts = data.map(d => d.max_count);
+
+        detailedChart.data.labels = labels;
+        detailedChart.data.datasets[0].data = avgCounts;
+        detailedChart.data.datasets[1].data = maxCounts;
+        detailedChart.update();
+    }
+
+    function updateTable(data) {
+        const tbody = document.getElementById('detailedTableBody');
+        tbody.innerHTML = '';
+
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding: 12px; border-bottom: 1px solid #1f2937; color: #d1d5db;">#${row.id}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #1f2937; color: #9ca3af;">${row.timestamp}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #1f2937; color: #22c55e; font-weight: bold;">${row.person_count}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #1f2937; color: #d1d5db;">${(row.confidence * 100).toFixed(1)}%</td>
+                <td style="padding: 12px; border-bottom: 1px solid #1f2937; color: #6b7280;">${row.source}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+</script>
+{% endblock %}

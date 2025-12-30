@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Lunet AI{% endblock %}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <span class="material-symbols-outlined logo-icon">group_add</span>
+                <h1>Lunet AI</h1>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="{{ url_for('index') }}" class="nav-item {% if active_page == 'index' %}active{% endif %}">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Panel</span>
+                </a>
+                <a href="{{ url_for('analytics') }}"
+                    class="nav-item {% if active_page == 'analytics' %}active{% endif %}">
+                    <span class="material-symbols-outlined">analytics</span>
+                    <span>Analizler</span>
+                </a>
+                <a href="{{ url_for('settings') }}"
+                    class="nav-item {% if active_page == 'settings' %}active{% endif %}">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Ayarlar</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span id="systemStatus">Sistem Hazır</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Cache busting için ver=2 eklendi -->
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=2"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
